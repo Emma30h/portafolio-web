@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
-import { skillCategories } from "@/data/skills";
 import { projects } from "@/data/projects";
 import { ProjectCard } from "@/components/ProjectCard";
+import { SkillsGrid } from "@/components/SkillsGrid";
 
 export default function Home() {
   const featured = projects.filter((p) => p.featured);
@@ -63,26 +63,11 @@ export default function Home() {
         <h2 className="text-sm font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
           Skills & tecnologías
         </h2>
-        <div className="mt-8 grid gap-8 sm:grid-cols-2">
-          {skillCategories.map((category) => (
-            <div key={category.title}>
-              <h3 className="mb-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                {category.title}
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {category.skills.map((skill) => (
-                  <span
-                    key={skill.name}
-                    className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
-                  >
-                    <skill.icon className="h-4 w-4" />
-                    {skill.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          Hacé clic en una tecnología para ver para qué se usa, ventajas,
+          desventajas y cómo se combina con el resto del stack.
+        </p>
+        <SkillsGrid />
       </section>
 
       <section

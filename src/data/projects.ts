@@ -36,6 +36,7 @@ export const projects: Project[] = [
       "PostgreSQL (Supabase)",
       "Supabase Auth",
       "Redis",
+      "Brevo (SMTP)",
       "Tailwind CSS",
     ],
     featured: true,
@@ -48,7 +49,7 @@ export const projects: Project[] = [
     ],
     architecture: {
       description:
-        "El frontend y el backend conviven en el mismo proyecto Next.js usando el App Router: las páginas se renderizan como Server Components, las mutaciones (crear, editar, aprobar) pasan por Server Actions y algunas integraciones puntuales se exponen como API Routes. Toda la app habla con la base de datos a través de Prisma como capa de acceso a datos. Supabase se usa como backend de infraestructura: Postgres administrado, autenticación de usuarios y almacenamiento de archivos (fotos de perfil). Redis se usa como caché para aliviar consultas frecuentes.",
+        "El frontend y el backend conviven en el mismo proyecto Next.js usando el App Router: las páginas se renderizan como Server Components, las mutaciones (crear, editar, aprobar) pasan por Server Actions y algunas integraciones puntuales se exponen como API Routes. Toda la app habla con la base de datos a través de Prisma como capa de acceso a datos. Supabase se usa como backend de infraestructura: Postgres administrado, autenticación de usuarios y almacenamiento de archivos (fotos de perfil). Redis se usa como caché para aliviar consultas frecuentes. Las notificaciones por email (recuperación de contraseña, avisos de solicitudes pendientes) se envían vía el SMTP de Brevo.",
       diagram: `flowchart TD
     Browser[Navegador] --> RSC[Server Components]
     Browser --> SA[Server Actions]
@@ -60,6 +61,7 @@ export const projects: Project[] = [
     API --> Prisma
     SA --> Storage[Supabase Storage]
     API --> Redis[(Redis Cache)]
+    SA --> Brevo["Brevo (SMTP)"]
 
     Prisma --> DB[(PostgreSQL)]
     Auth --> DB
@@ -119,20 +121,20 @@ export const projects: Project[] = [
       "PostgreSQL (Supabase)",
       "node-postgres (SQL directo)",
       "Vercel Cron",
-      "Brevo (email transaccional)",
+      "Brevo (SMTP)",
       "Tailwind CSS",
     ],
     featured: true,
     highlights: [
       "Sincronización de datos entre dos proyectos: lee cumpleaños desde la base de Perfiles Garden en modo solo lectura",
       "Autenticación propia con verificación de email por código (OTP) y recuperación de contraseña",
-      "Acceso público compartible (link/QR) con sesión limitada para clientes externos",
+      "Dos modos de acceso: Admin (gestión completa) y Cliente (solo visualización), este último compartido mediante un código QR",
       "Envío diario automático de resumen por email vía cron, con registro de entregas",
       "Carga de contenido mensual desde archivos PDF",
     ],
     architecture: {
       description:
-        "A diferencia de Perfiles Garden, acá no hay una capa ORM: las páginas del App Router llaman a API Routes que ejecutan SQL parametrizado directamente contra PostgreSQL (con node-postgres y, para algunas operaciones, el cliente REST de Supabase). La autenticación es propia (cookies de sesión, bcrypt y validación con Zod) en vez de usar Supabase Auth. Un cron job de Vercel dispara diariamente un endpoint que arma el resumen del día y lo envía por email a través de Brevo, dejando registro de cada envío. El dato más particular de la arquitectura es la sincronización entre proyectos: una conexión de solo lectura consulta la tabla de agentes de Perfiles Garden (misma instancia de Supabase, otro esquema) para actualizar automáticamente los cumpleaños, sin pisar los que se cargaron a mano.",
+        "A diferencia de Perfiles Garden, acá no hay una capa ORM: las páginas del App Router llaman a API Routes que ejecutan SQL parametrizado directamente contra PostgreSQL (con node-postgres y, para algunas operaciones, el cliente REST de Supabase). La autenticación es propia (cookies de sesión, bcrypt y validación con Zod) en vez de usar Supabase Auth. Un cron job de Vercel dispara diariamente un endpoint que arma el resumen del día y lo envía por email vía el SMTP de Brevo, dejando registro de cada envío. El dato más particular de la arquitectura es la sincronización entre proyectos: una conexión de solo lectura consulta la tabla de agentes de Perfiles Garden (misma instancia de Supabase, otro esquema) para actualizar automáticamente los cumpleaños, sin pisar los que se cargaron a mano.",
       diagram: `flowchart TD
     Browser[Navegador] --> Pages[Paginas App Router]
     Browser --> API[API Routes]
@@ -143,14 +145,14 @@ export const projects: Project[] = [
 
     Cron["Vercel Cron (diario)"] --> Job[Endpoint de notificaciones]
     Job --> PG
-    Job --> Brevo[Brevo Email API]
+    Job --> Brevo["Brevo (SMTP)"]
 
     Sync["Conexion de solo lectura"] --> AgentesDB[(Tabla agentes de Perfiles Garden)]
     Job --> Sync`,
     },
     dataModel: {
       description:
-        "No usa Prisma: el esquema vive como SQL versionado. Los usuarios administrativos tienen un rol (ADMIN o CLIENTE) y, si son CLIENTE, quedan asociados a un cliente concreto. El registro y la recuperación de contraseña se apoyan en tablas de códigos de un solo uso (OTP) con expiración. Los cumpleaños pueden cargarse a mano o llegar sincronizados desde Perfiles Garden. Cada corrida del cron queda registrada, junto con el detalle de a quién se le envió cada email, lo que permite auditar los envíos.",
+        "No usa Prisma: el esquema vive como SQL versionado. Los usuarios tienen un rol (ADMIN o CLIENTE): ADMIN gestiona el sistema por completo, mientras que CLIENTE queda asociado a un cliente concreto y solo puede visualizar el calendario, sin acceso al panel de administración — es el modo que se comparte mediante un código QR. El registro y la recuperación de contraseña se apoyan en tablas de códigos de un solo uso (OTP) con expiración. Los cumpleaños pueden cargarse a mano o llegar sincronizados desde Perfiles Garden. Cada corrida del cron queda registrada, junto con el detalle de a quién se le envió cada email, lo que permite auditar los envíos.",
       diagram: `erDiagram
     USERS ||--o{ USER_ROLES : tiene
     USER_ROLES }o--o| CLIENTS : pertenece_a
@@ -172,9 +174,9 @@ export const projects: Project[] = [
           "Verificación de email y recuperación de contraseña mediante códigos temporales, sin depender de un proveedor externo de autenticación.",
       },
       {
-        title: "Acceso público controlado",
+        title: "Modo Admin y modo Cliente",
         description:
-          "Un link (o QR) compartible habilita una sesión de solo lectura para clientes externos, sin exponer el panel de administración.",
+          "Modo Admin con gestión completa del calendario y las notificaciones, y modo Cliente de solo visualización — pensado para compartirse con personas externas mediante un código QR, sin exponer el panel de administración.",
       },
       {
         title: "Notificaciones automáticas",

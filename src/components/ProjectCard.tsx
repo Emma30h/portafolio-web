@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { Project } from "@/data/projects";
+import { getTechIcon } from "@/data/tech-icons";
 
 const gradients = [
   "from-indigo-500 to-violet-600",
@@ -39,14 +40,18 @@ export function ProjectCard({
           {project.shortDescription}
         </p>
         <div className="mt-auto flex flex-wrap gap-2 pt-2">
-          {project.stack.slice(0, 4).map((tech) => (
-            <span
-              key={tech}
-              className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
-            >
-              {tech}
-            </span>
-          ))}
+          {project.stack.slice(0, 4).map((tech) => {
+            const Icon = getTechIcon(tech);
+            return (
+              <span
+                key={tech}
+                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+              >
+                {Icon && <Icon className="h-3 w-3" />}
+                {tech}
+              </span>
+            );
+          })}
         </div>
       </div>
     </Link>

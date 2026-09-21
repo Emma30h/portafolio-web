@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 import { projects } from "@/data/projects";
+import { getTechIcon } from "@/data/tech-icons";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 export function generateStaticParams() {
@@ -51,14 +52,18 @@ export default async function ProjectPage(
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {project.stack.map((tech) => (
-          <span
-            key={tech}
-            className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
-          >
-            {tech}
-          </span>
-        ))}
+        {project.stack.map((tech) => {
+          const Icon = getTechIcon(tech);
+          return (
+            <span
+              key={tech}
+              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+            >
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              {tech}
+            </span>
+          );
+        })}
       </div>
 
       {project.repoUrl && (
